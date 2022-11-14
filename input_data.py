@@ -19,7 +19,7 @@ def load_data():
     WT=0
     DG=1
     Bat=1
-    Grid=0
+    global Grid=0
 
     EM=0 # 0: LCOE, 1:LCOE+LEM
 
@@ -59,9 +59,9 @@ def load_data():
     global h_hub=17               # Hub height 
     global h0=43.6                # anemometer height
     nw=1                   # Efficiency
-    v_cut_out=25           # cut out speed
-    v_cut_in=2.5           # cut in speed
-    v_rated=9.5            # rated speed(m/s)
+    global v_cut_out=25           # cut out speed
+    global v_cut_in=2.5           # cut in speed
+    global v_rated=9.5            # rated speed(m/s)
     global alfa_wind_turbine=0.14 # coefficient of friction ( 0.11 for extreme wind conditions, and 0.20 for normal wind conditions)
 
     C_WT = 1200      # Capital cost ($) per KW
@@ -74,17 +74,17 @@ def load_data():
 
     # Diesel generator
     C_DG = 352       # Capital cost ($/KWh)
-    R_DG = 352       # Replacement Cost ($/kW)
-    MO_DG = 0.003    # O&M+ running cost ($/op.h)
-    TL_DG=131400     # Life time (h)
+    global R_DG = 352       # Replacement Cost ($/kW)
+    global MO_DG = 0.003    # O&M+ running cost ($/op.h)
+    global TL_DG=131400     # Life time (h)
     n_DG=0.4         # Efficiency
     D_DG=0.05        # yearly degradation (%)
-    LR_DG=0.25       # Minimum Load Ratio (%)
+    global LR_DG=0.25       # Minimum Load Ratio (%)
 
-    C_fuel=1.24  # Fuel Cost ($/L)
+    global C_fuel=1.24  # Fuel Cost ($/L)
     # Diesel Generator fuel curve
-    a=0.2730          # L/hr/kW output
-    b=0.0330          # L/hr/kW rated
+    global a=0.2730          # L/hr/kW output
+    global b=0.0330          # L/hr/kW rated
 
     # Emissions produced by Disesl generator for each fuel in littre [L]	g/L
     CO2=2621.7
@@ -94,28 +94,28 @@ def load_data():
 
     # Battery data
     C_B = 360              # Capital cost ($/KWh)
-    R_B = 360              # Repalacement Cost ($/kW)
+    global R_B = 360              # Repalacement Cost ($/kW)
     MO_B=10                # Maintenance cost ($/kw.year)
     L_B=5                  # Life time (year)
-    SOC_min=0.2
-    SOC_max=1
-    SOC_initial=0.5
+    global SOC_min=0.2
+    global SOC_max=1
+    global SOC_initial=0.5
     D_B=0.05               # Degradation
     RT_B=ceil(n/L_B)-1     # Replecement time
-    Q_lifetime=8000        # kWh
-    self_discharge_rate=0  # Hourly self-discharge rate
-    alfa_battery=1         # is the storage's maximum charge rate [A/Ah]
-    c=0.403                # the storage capacity ratio [unitless] 
-    k=0.827                # the storage rate constant [h-1]
-    Imax=16.7              # the storage's maximum charge current [A]
-    Vnom=12                # the storage's nominal voltage [V] 
-    ef_bat=0.8             # storage DC-DC efficiency 
+    global Q_lifetime=8000        # kWh
+    global self_discharge_rate=0  # Hourly self-discharge rate
+    global alfa_battery=1         # is the storage's maximum charge rate [A/Ah]
+    global c=0.403                # the storage capacity ratio [unitless] 
+    global k=0.827                # the storage rate constant [h-1]
+    global Imax=16.7              # the storage's maximum charge current [A]
+    global Vnom=12                # the storage's nominal voltage [V] 
+    global ef_bat=0.8             # storage DC-DC efficiency 
     # Inverter
     C_I = 788        # Capital cost ($/kW)
     R_I = 788        # Replacement cost ($/kW)
     MO_I =20         # O&M cost ($/kw.year)
     L_I=25           # Life time (year)
-    n_I=0.85         # Efficiency
+    global n_I=0.85         # Efficiency
     RT_I=ceil(n/L_I)-1 # Replecement time
 
     # Charger
@@ -176,8 +176,8 @@ def load_data():
 
     Csell=0.1
 
-    Pbuy_max=ceil(1.2*max(Eload)) # kWh
-    Psell_max=Pbuy_max
+    global Pbuy_max=ceil(1.2*max(Eload)) # kWh
+    global Psell_max=Pbuy_max
 
     # Emissions produced by Grid generators (g/kW)
     E_CO2=1.43
