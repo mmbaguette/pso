@@ -2,7 +2,7 @@
 """
 Fitness function
 """
-def fitness(X, Eload, T, G, Vw, inputs):
+def fitness(X, Eload, G, T, Vw, inputs):
     NT = Eload.size # time step numbers
 
     Npv = round(X[0]) # PV number
