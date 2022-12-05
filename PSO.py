@@ -12,21 +12,8 @@ from Models import Solution, Particle
 """
 Main method
 """
-if __name__ == '__main__':
-    # run PSO and when we get the 3 values, we put them into the fitness function to get those results
-    best_cost, position, cost_curve = pso()
-    # LCOE = fitness() # what is X?
-
-"""
-PSO function
-"""
-def pso(
-    data='Data.csv', # filename of data input or file object, default='Data.csv'
-    **kwargs
-):
-    """
-    Read data from csv
-    """
+def main(data='Data.csv', **kwargs):
+    # read data from csv
     df = pd.read_csv(data, header=None)
     Eload = df[0]
     G = df[1]
@@ -35,6 +22,22 @@ def pso(
 
     inputs = Data(Eload, G, T, Vw) # load input data
     inputs.set_user_data(kwargs) # set user defined values
+
+    # run PSO and when we get the best cost's position, we put them into the fitness function to get those results
+    position = pso(Eload, G, T, Vw, inputs)
+    LCOE = fitness(position, Eload, G, Tm Vw, inputs) 
+
+"""
+PSO function
+"""
+def pso(
+    data='Data.csv', # filename of data input or file object, default='Data.csv'
+    Eload, 
+    G, 
+    T, 
+    Vw,
+    inputs
+):
 
     nVar = 5                # number of decision variables
     VarSize = [0, nVar]     # size of decision variables matrix
@@ -154,4 +157,4 @@ def pso(
             FinalBest["Position"] = GlobalBest["Position"]
             FinalBest["CostCurve"] = BestCost
 
-    return FinalBest["Cost"], FinalBest["Position"], FinalBest["CostCurve"]
+    return FinalBest["Position"]
