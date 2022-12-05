@@ -1,20 +1,24 @@
+import numpy as np
+
+from Battery_Model import battery_model
+
 """
 Energy management 
 """
 def energy_management(
-    Ppv, Pwt, Eload, Cn_b, Nbat, Pn_DG, NT, Pinv_max, Cn_I, cc_gen, Cbw, inputs
+    Ppv, Pwt, Eload, Cn_B, Nbat, Pn_DG, NT, Pinv_max, cc_gen, Cbw, inputs
 ):
-    Eb=zeros((1, NT))
-    Pch=zeros((1, NT))
-    Pdch=zeros((1, NT))
-    Ech=zeros((1, NT))
-    Edch=zeros((1, NT))
-    Pdg=zeros((1, NT))
-    Edump=zeros((1, NT))
-    Ens=zeros((1, NT))
-    Psell=zeros((1, NT))
-    Pbuy=zeros((1, NT))
-    Pinv=zeros((1, NT))
+    Eb=np.zeros((NT, ))
+    Pch=np.zeros((NT, ))
+    Pdch=np.zeros((NT, ))
+    Ech=np.zeros((NT, ))
+    Edch=np.zeros((NT, ))
+    Pdg=np.zeros((NT, ))
+    Edump=np.zeros((NT, ))
+    Ens=np.zeros((NT, ))
+    Psell=np.zeros((NT, ))
+    Pbuy=np.zeros((NT, ))
+    Pinv=np.zeros((NT, ))
     Ebmax=inputs.SOC_max*Cn_B
     Ebmin=inputs.SOC_min*Cn_B
     Eb[0]=inputs.SOC_initial*Cn_B
@@ -28,7 +32,7 @@ def energy_management(
     Pdg_min = 0.05*Pn_DG # LR_DG
 
     for t in range(NT):
-        Pch_max, Pdch_max = battery_model(Cn_B, Nbat, Eb[t], inputs.alfa_battery, inputs.c, inputs.k, inputs.Imax, inputs.Vnom, inputs.ef_bat) # kW
+        Pch_max, Pdch_max = battery_model(Nbat, Eb[t], inputs.alfa_battery, inputs.c, inputs.k, inputs.Imax, inputs.Vnom, inputs.ef_bat) # kW
 
         #  if PV+Pwt greater than load  (battery should charge)
         if P_RE[t] >= (Eload[t] / inputs.n_I) and Eload[t] <= Pinv_max: 
@@ -42,9 +46,9 @@ def energy_management(
             Psur_AC = inputs.n_I * (P_RE[t]-Pch[t]-Eload[t]) # surplus energy
 
             Psell[t] = min(Psur_AC, inputs.Psell_max)
-            Psell[t] = min(max(0, Pinv_max-Eload[t]), inputs.Psell[t])
+            Psell[t] = min(max(0, Pinv_max-Eload[t]), Psell[t])
 
-            Edump[t] = P_RE[t] - Pch[t] - (Eload[t] + inputs.Psell[t]) / inputs.n_I
+            Edump[t] = P_RE[t] - Pch[t] - (Eload[t] + Psell[t]) / inputs.n_I
         
         # if load greater than PV+Pwt 
         else: 

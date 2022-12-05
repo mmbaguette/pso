@@ -1,3 +1,7 @@
+import numpy as np
+
+from simplified_rate_structures import calcTouCbuy
+
 class Data():
     def __init__(self, Eload, G, T, Vw):
         self.PV = 1 # Type of system (1: included, 0=not included)
@@ -33,7 +37,7 @@ class Data():
         self.n_PV=0.205       # Efficiency of PV module
         self.D_PV=0.01        # PV yearly degradation
         self.CE_PV=50         # Engineering cost of system per kW for first year
-        self.RT_PV=ceil(self.n/self.L_PV)-1   # Replecement time
+        self.RT_PV=np.ceil(self.n/self.L_PV)-1   # Replecement time
 
         # WT data
         self.h_hub=17               # Hub height 
@@ -50,7 +54,7 @@ class Data():
         self.L_WT=20          # Life time (year)
         self.n_WT=0.30        # Efficiency of WT module
         self.D_WT=0.05        # PV yearly degradation
-        self.RT_WT=ceil(self.n/self.L_WT)-1   # Replecement time
+        self.RT_WT=np.ceil(self.n/self.L_WT)-1   # Replecement time
 
         # Diesel generator
         self.C_DG = 352       # Capital cost ($/KWh)
@@ -81,7 +85,7 @@ class Data():
         self.SOC_max=1
         self.SOC_initial=0.5
         self.D_B=0.05               # Degradation
-        self.RT_B=ceil(self.n/self.L_B)-1     # Replecement time
+        self.RT_B=np.ceil(self.n/self.L_B)-1     # Replecement time
         self.Q_lifetime=8000        # kWh
         self.self_discharge_rate=0  # Hourly self-discharge rate
         self.alfa_battery=1         # is the storage's maximum charge rate [A/Ah]
@@ -96,60 +100,43 @@ class Data():
         self.MO_I =20         # O&M cost ($/kw.year)
         self.L_I=25           # Life time (year)
         self.n_I=0.85         # Efficiency
-        self.RT_I=ceil(self.n/self.L_I)-1 # Replecement time
+        self.RT_I=np.ceil(self.n/self.L_I)-1 # Replecement time
 
         # Charger
         self.C_CH = 150  # Capital Cost ($)
         self.R_CH = 150  # Replacement Cost ($)
         self.MO_CH = 5   # O&M cost ($/year)
         self.L_CH=25     # Life time (year)
-        self.RT_CH=ceil(self.n/self.L_CH)-1 # Replecement time
+        self.RT_CH=np.ceil(self.n/self.L_CH)-1 # Replacement time
 
-        # Price
-        # TODO: matrices
-        # Winter
-        # self.Tp_w=[7:10 17:18]
-        # self.Tm_w=11:16
-        # self.Toff_w=[1:6 19:24]
+        # self.Cbuy = getTotalCharge()
+        onPrice = [0.1516, 0.3215]
+        midPrice = [0, 0.1827]
+        offPrice = [0.1098, 0.1323]
+        onHours = [
+            [17, 18, 19],
+            [17, 18, 19]
+        ]
+        midHours = [
+            [],
+            [12, 13, 14, 15, 16, 20, 21, 22, 23]
+        ]
+        offHours = [
+            [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 20, 21, 22, 23],
+            [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11]
+        ]
+        # define summer season
+        months = np.zeros(12)
+        months[5:9] = 1
+        # days in each month
+        daysInMonth = [31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31]
+        # Holidays definition based on the number of the day in 365 days format
+        holidays = [10, 50, 76, 167, 298, 340]
 
-        # Summer
-        # self.Tp_s=11:16
-        # self.Tm_s=[7:10 17:18]
-        # self.Toff_s=[1:6 19:24]
-
-        self.P_peak=0.17
-        self.P_mid=0.113
-        self.P_offpeak=0.083
-
-        # months
-        # TODO: use constants for winter/summer months
-        self.Month = zeros((1,12))
-        for i in range(4,10):
-            self.Month[i] = 1 # summer month
-        self.Day = [31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31]
-
-        for m in range(12):
-            # self.t_index = 24 * sum(self.Day[0:m]) + 1:24 * sum(self.Day[0:m+1]) # TODO: what is 1:24
-            self.nt = self.t_index.size
-
-            if self.Month[m] == 1:
-                self.tp = self.Tp_s
-                self.tm = self.Tm_s
-                self.toff = self.Toff_s
-            else:
-                self.tp = self.Tp_w
-                self.tm = self.Tm_w
-                self.toff = self.Toff_w
-            
-            self.Cbuy[self.t_index] = self.P_offpeak
-
-            for d in range(self.Day[m]+1):
-                self.Cbuy[self.t_index[self.tp]+24*(d-1)] = self.P_peak
-                self.Cbuy[self.t_index[self.tm]+24*(d-1)] = self.P_mid
-        
+        self.Cbuy = calcTouCbuy(onPrice, midPrice, offPrice, onHours, midHours, offHours, months, daysInMonth, holidays)
         self.Csell = 0.1
         
-        self.Pbuy_max=ceil(1.2*max(Eload)) # kWh
+        self.Pbuy_max=np.ceil(1.2*max(Eload)) # kWh
         self.Psell_max=self.Pbuy_max
 
         # Emissions produced by Grid generators (g/kW)
@@ -157,5 +144,5 @@ class Data():
         self.E_SO2=0.01
         self.E_NOx=0.39
     
-    def set_user_data(**kwargs):
+    def set_user_data(self, **kwargs):
         self.__dict__.update(kwargs)

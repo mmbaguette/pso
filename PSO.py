@@ -1,4 +1,5 @@
 import numpy as np
+import pandas as pd
 
 from Input_Data import Data
 from EMS import energy_management
@@ -7,6 +8,7 @@ from Fitness import fitness
 from Models import Solution, Particle
 
 # https://mathesaurus.sourceforge.net/matlab-numpy.html
+
 
 
 """
@@ -21,17 +23,22 @@ def main(data='Data.csv', **kwargs):
     Vw = df[3]
 
     inputs = Data(Eload, G, T, Vw) # load input data
-    inputs.set_user_data(kwargs) # set user defined values
+    inputs.set_user_data(**kwargs) # set user defined values
 
     # run PSO and when we get the best cost's position, we put them into the fitness function to get those results
     position = pso(Eload, G, T, Vw, inputs)
-    LCOE = fitness(position, Eload, G, Tm Vw, inputs) 
+    
+    print(position)
+    
+    LCOE = fitness(position, Eload, G, T, Vw, inputs) 
+
+    print(LCOE)
+
 
 """
 PSO function
 """
 def pso(
-    data='Data.csv', # filename of data input or file object, default='Data.csv'
     Eload, 
     G, 
     T, 
@@ -46,8 +53,8 @@ def pso(
     VarMin = np.array([0,0,0,0,0]) # Lower bound of variables
     VarMax = np.array([100,100,60,10,20]) # Upper bound of variables
 
-    VarMin = VarMin * [PV, WT, Bat, DG, 1]
-    VarMax = VarMax * [PV, WT, Bat, DG, 1]
+    VarMin = VarMin * [inputs.PV, inputs.WT, inputs.Bat, inputs.DG, 1]
+    VarMax = VarMax * [inputs.PV, inputs.WT, inputs.Bat, inputs.DG, 1]
 
     # PSO parameters
     MaxIt = 100 # Max number of iterations
@@ -75,7 +82,9 @@ def pso(
 
         # initialization
         empty_particle = Particle()
-        particle = np.kron(ones((nPop, 1)), empty_particle)
+        particle = [empty_particle for _ in range(nPop)]
+        particle = np.array(particle)
+        # np.tile(empty_particle, (nPop, 0))
 
         GlobalBest = {
             "Cost": float('inf'),
@@ -84,13 +93,16 @@ def pso(
 
         for i in range(nPop):
             # initialize position
-            particle[i].Position = np.random.uniform(VarMin, VarMax, VarSize) 
+            position_array = []
+            for var in range(len(VarMin)):
+                position_array.append(np.random.uniform(VarMin[var], VarMax[var]))
+            particle[i].Position = position_array
             
             # initialize velocity
-            particle[i].Velocity = zeros(VarSize)
+            particle[i].Velocity = np.zeros(VarSize)
             
             # evaluation
-            particle[i].Cost = fitness(particle[i].Position)
+            particle[i].Cost = fitness(particle[i].Position, Eload, G, T, Vw, inputs)
             
             # update personal best
             particle[i].BestPosition = particle[i].Position
@@ -101,8 +113,8 @@ def pso(
                 GlobalBest["Cost"] = particle[i].BestCost
                 GlobalBest["Position"] = particle[i].BestPosition
     
-        BestCost = zeros((MaxIt, 1))
-        MeanCost = zeros((MaxIt, 1))
+        BestCost = np.zeros((MaxIt, 1))
+        MeanCost = np.zeros((MaxIt, 1))
 
         # PSO main loop
         for it in range(MaxIt):
@@ -127,7 +139,7 @@ def pso(
                 particle[i].Position = min(particle[i].Position, VarMax)
 
                 # evaluation
-                particle[i].Cost = fitness(particle[i].Position)
+                particle[i].Cost = fitness(particle[i].Position, Eload, G, T, Vw, inputs)
 
                 # update personal best
                 if particle[i].Cost < particle[i].BestCost:
@@ -158,3 +170,8 @@ def pso(
             FinalBest["CostCurve"] = BestCost
 
     return FinalBest["Position"]
+
+
+
+if __name__ == "__main__":
+    main()

@@ -1,3 +1,6 @@
+import numpy as np
+
+from EMS import energy_management
 
 """
 Fitness function
@@ -25,8 +28,8 @@ def fitness(X, Eload, G, T, Vw, inputs):
 
     v2 = ((inputs.h_hub / inputs.h0) ** inputs.alfa_wind_turbine) * v1 # v1 is the speed at a reference height;v2 is the speed at a hub height h2
 
-    Pwt = zeros((1, 8761))
-    for t in Pwt:
+    Pwt = np.zeros((8760,))
+    for t in range(Pwt.size):
         if v2[t] < inputs.v_cut_in or v2[t] > inputs.v_cut_out:
             Pwt[t] = 0
         elif inputs.v_cut_in <= v2[t] and v2[t] < inputs.v_rated:
@@ -40,31 +43,32 @@ def fitness(X, Eload, G, T, Vw, inputs):
     # Energy management
     # Battery wear cost
     if Cn_B > 0:
-        Cbw = inputs.R_B * Cn_B / (Nbat * inputs.Q_lifetime * sqrt(inputs.ef_bat))
+        Cbw = inputs.R_B * Cn_B / (Nbat * inputs.Q_lifetime * np.sqrt(inputs.ef_bat))
     else:
         Cbw = 0
     
     # DG fix cost
     cc_gen = inputs.b * Pn_DG * inputs.C_fuel + inputs.R_DG * Pn_DG / inputs.TL_DG + inputs.MO_DG
 
-    (Eb, Pdg, Edump, Ens, Pch, Pdch, Pbuy, Psell) = energy_management(Ppv, Pwt, Eload, Cn_b, Nbat, Pn_DG, NT, Cn_I, cc_gen, Cbw)
-    q = (inputs.a * Pdg + inputs.b * Pn_DG) * (Pdg[Pdg > 0]) # fuel consumption of a diesel generator
+    (Eb, Pdg, Edump, Ens, Pch, Pdch, Pbuy, Psell, Pinv) = energy_management(Ppv, Pwt, Eload, Cn_B, Nbat, Pn_DG, NT, Cn_I, cc_gen, Cbw, inputs)
+    Pdg = np.where(Pdg > 0, 1, 0)
+    q = (inputs.a * Pdg + inputs.b * Pn_DG) * (Pdg) # fuel consumption of a diesel generator
 
     # installation and operation cost
     # total investment cost ($)
-    I_Cost=C_PV*Pn_PV + C_WT*Pn_WT+ C_DG*Pn_DG+C_B*Cn_B+C_I*Cn_I +C_CH
+    I_Cost=inputs.C_PV*Pn_PV + inputs.C_WT*Pn_WT+ inputs.C_DG*Pn_DG+inputs.C_B*Cn_B+inputs.C_I*Cn_I +inputs.C_CH
 
-    Top_DG = sum(Pdg[Pdg > 0]) + 1
+    Top_DG = np.count_nonzero(Pdg) + 1
     L_DG = inputs.TL_DG / Top_DG
-    RT_DG = ceil(inputs.n / L_DG) - 1 
+    RT_DG = np.ceil(inputs.n / L_DG) - 1 
 
     # total replacement cost ($)
-    RC_PV= zeros((1,inputs.n+1))
-    RC_WT= zeros((1,inputs.n+1))
-    RC_DG= zeros((1,inputs.n+1))
-    RC_B = zeros((1,inputs.n+1))
-    RC_I = zeros((1,inputs.n+1))
-    RC_CH = zeros((1,inputs.n+1))
+    RC_PV= np.zeros((1,inputs.n+1))
+    RC_WT= np.zeros((1,inputs.n+1))
+    RC_DG= np.zeros((1,inputs.n+1))
+    RC_B = np.zeros((1,inputs.n+1))
+    RC_I = np.zeros((1,inputs.n+1))
+    RC_CH = np.zeros((1,inputs.n+1))
 
     RC_PV[inputs.L_PV+1:inputs.L_PV:inputs.n+1]= inputs.R_PV*Pn_PV / (1+inputs.ir) ** np.array([[1.001*inputs.L_PV], [inputs.L_PV], [inputs.n]])
     RC_WT[inputs.L_WT+1:inputs.L_WT:inputs.n+1]= inputs.R_WT*Pn_WT / (1+inputs.ir) ** np.array([[1.001*inputs.L_WT], [inputs.L_WT], [inputs.n]])
@@ -101,7 +105,7 @@ def fitness(X, Eload, G, T, Vw, inputs):
     DG_Emissions=sum(q*(inputs.CO2 + inputs.NOx + inputs.SO2))/1000 # total emissions (kg/year)
     Grid_Emissions= sum(Pbuy*(inputs.E_CO2+inputs.E_SO2+inputs.E_NOx))/1000 # total emissions (kg/year)
 
-    Grid_Cost= (sum(Pbuy*inputs.)-sum(Psell*inputs.Csell))* 1/(1+inputs.ir)** np.array([[1], [inputs.n]])
+    Grid_Cost= (sum(Pbuy*inputs.Cbuy)-sum(Psell*inputs.Csell))* 1/(1+inputs.ir)** np.array([[1], [inputs.n]])
 
     # Capital recovery factor
     CRF=inputs.ir*(1+inputs.ir)**inputs.n/((1+inputs.ir)**inputs.n -1)
