@@ -13,7 +13,9 @@ from Models import Solution, Particle
 Main method
 """
 if __name__ == '__main__':
-    pso()
+    # run PSO and when we get the 3 values, we put them into the fitness function to get those results
+    best_cost, position, cost_curve = pso()
+    # LCOE = fitness() # what is X?
 
 """
 PSO function
@@ -59,7 +61,11 @@ def pso(
     Run_Time = 1
 
     solution_particle = Solution()
-    Sol = np.kron(ones((Run_Time, 1)), solution_particle)
+
+    FinalBest = {
+        "Cost": float('inf'),
+        "Position": None
+    }
 
     for tt in range(Run_Time):
         w = 1 # intertia weight 
@@ -75,7 +81,7 @@ def pso(
 
         for i in range(nPop):
             # initialize position
-            particle[i].Position = np.random.uniform(VarMin, VarMax, VarSize) # TODO: discrete uniform distribution (not continuous)
+            particle[i].Position = np.random.uniform(VarMin, VarMax, VarSize) 
             
             # initialize velocity
             particle[i].Velocity = zeros(VarSize)
@@ -109,8 +115,9 @@ def pso(
                 # update position
                 particle[i].Position = particle[i].Position + particle[i].Velocity
 
-                IsOutside = particle[i].Position < VarMin or particle[i].Position > VarMax
-                # particle(i).Velocity(IsOutside)=-particle(i).Velocity(IsOutside) #TODO: What is this evaluation
+                # Velocity Mirror Effect
+                if particle[i].Position < VarMin or particle[i].Position > VarMax:
+                    particle[i].Velocity = -particle[i].Velocity 
 
                 # Apply position limits
                 particle[i].Position = max(particle[i].Position, VarMin)
@@ -142,11 +149,9 @@ def pso(
 
             w = w*wdamp
     
-        Sol[tt].BestCost = GlobalBest["Cost"]
-        Sol[tt].BestSol = GlobalBest["Position"]
-        Sol[tt].CostCurve = BestCost
+        if GlobalBest["Cost"] < FinalBest["Cost"]:
+            FinalBest["Cost"] = GlobalBest["Cost"]
+            FinalBest["Position"] = GlobalBest["Position"]
+            FinalBest["CostCurve"] = BestCost
 
-
-    Best = [Sol.BestCost] # TODO: what is this
-    # [~,index]=min(Best) # TODO: what is this, what is index?
-    X=Sol[index].BestSol
+    return FinalBest["Cost"], FinalBest["Position"], FinalBest["CostCurve"]

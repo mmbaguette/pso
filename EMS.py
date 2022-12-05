@@ -56,16 +56,16 @@ def energy_management(
                 Pbuy[t] = min(Edef_AC, inputs.Pbuy_max)
 
                 Pdg[t] = min(Edef_AC-Pbuy[t], Pn_DG)
-                Pdg[t] = Pdg[t] * (Pdg[t] >= inputs.LR_DG*Pn_DG) + inputs.LR_DG*Pn_DG*(Pdg[t] < inputs.LR_DG*Pn_DG) * (Pdg[t] > Pdg_min) # TODO: what is this multiplication?
+                Pdg[t] = Pdg[t] * (Pdg[t] >= inputs.LR_DG*Pn_DG) + inputs.LR_DG*Pn_DG*(Pdg[t] < inputs.LR_DG*Pn_DG) * (Pdg[t] > Pdg_min) 
 
                 Edef_AC=Eload[t]-Pdg[t]-Pbuy[t]-min(Pinv_max, inputs.n_I*P_RE[t])
-                Edef_DC=Edef_AC/inputs.n_I*(Edef_AC>0) # TODO: what is this multiplication?
+                Edef_DC=Edef_AC/inputs.n_I*(Edef_AC>0)
                 Eb_e=(Eb[t]-Ebmin)*inputs.ef_bat
                 Pdch[t] = min(Eb_e, Edef_DC)
                 Pdch[t] = min(Pdch[t],Pdch_max)
                 
-                Esur_AC=-Edef_AC*(Edef_AC<0) # TODO: what is this multiplication?
-                Pbuy[t]=Pbuy[t]-Esur_AC*(inputs.Grid==1)  # TODO: what is this multiplication?
+                Esur_AC=-Edef_AC*(Edef_AC<0) 
+                Pbuy[t]=Pbuy[t]-Esur_AC*(inputs.Grid==1)
 
             elif (inputs.Cbuy[t]<= Cbw) and (Cbw<price_dg): # Grid, Bat , DG : 2
 
@@ -78,27 +78,27 @@ def energy_management(
                 
                 Edef_AC=Eload[t]-Pbuy[t]-min(Pinv_max, inputs.n_I*(P_RE[t]+Pdch[t]))
                 Pdg[t]=min(Edef_AC,Pn_DG)
-                Pdg[t]=Pdg[t]*(Pdg[t]>=inputs.LR_DG*Pn_DG)+inputs.LR_DG*Pn_DG*(Pdg[t]<inputs.LR_DG*Pn_DG)*(Pdg[t]>Pdg_min)  # TODO: what is this multiplication?
+                Pdg[t]=Pdg[t]*(Pdg[t]>=inputs.LR_DG*Pn_DG)+inputs.LR_DG*Pn_DG*(Pdg[t]<inputs.LR_DG*Pn_DG)*(Pdg[t]>Pdg_min)  
             
             elif (price_dg < inputs.Cbuy[t]) and (inputs.Cbuy[t]<=Cbw):  # DG, Grid , Bat :3
                 Pdg[t]=min(Edef_AC,Pn_DG)
-                Pdg[t]=Pdg[t]*(Pdg[t]>=inputs.LR_DG*Pn_DG)+inputs.LR_DG*Pn_DG*(Pdg[t]<inputs.LR_DG*Pn_DG)*(Pdg[t]>Pdg_min) # TODO: what is this multiplication?
+                Pdg[t]=Pdg[t]*(Pdg[t]>=inputs.LR_DG*Pn_DG)+inputs.LR_DG*Pn_DG*(Pdg[t]<inputs.LR_DG*Pn_DG)*(Pdg[t]>Pdg_min)
                 
                 Pbuy[t]=max(0, min(Edef_AC-Pdg[t],inputs.Pbuy_max))
                 Psell[t]=max(0, min(Pdg[t]-Edef_AC,inputs.Psell_max))
                 
                 Edef_DC=(Eload[t]-Pbuy[t]-Pdg[t])/inputs.n_I-P_RE[t]
-                Edef_DC=Edef_DC*(Edef_DC>0) # TODO: what is this multiplication?
+                Edef_DC=Edef_DC*(Edef_DC>0) 
                 Eb_e=(Eb[t]-Ebmin)*inputs.ef_bat
                 Pdch[t] = min(Eb_e,Edef_DC)
                 Pdch[t]=min(Pdch[t],Pdch_max)
 
             elif (price_dg<Cbw) and (Cbw < inputs.Cbuy[t]):  # DG, Bat , Grid :4
                 Pdg[t]=min(Edef_AC,Pn_DG)
-                Pdg[t]=Pdg[t]*(Pdg[t]>=inputs.LR_DG*Pn_DG)+inputs.LR_DG*Pn_DG*(Pdg[t]<inputs.LR_DG*Pn_DG)*(Pdg[t]>Pdg_min) # TODO: what is this multiplication?
+                Pdg[t]=Pdg[t]*(Pdg[t]>=inputs.LR_DG*Pn_DG)+inputs.LR_DG*Pn_DG*(Pdg[t]<inputs.LR_DG*Pn_DG)*(Pdg[t]>Pdg_min)
                 
                 Edef_DC=(Eload[t]-Pdg[t])/inputs.n_I-P_RE[t]
-                Edef_DC=Edef_DC*(Edef_DC>0) # TODO: what is this multiplication?
+                Edef_DC=Edef_DC*(Edef_DC>0) 
                 Eb_e=(Eb[t]-Ebmin)*inputs.ef_bat
                 Pdch[t]= min(Eb_e,Edef_DC)
                 Pdch[t]= min(Pdch[t],Pdch_max)
@@ -115,7 +115,7 @@ def energy_management(
                 
                 Edef_AC=Eload[t]-min(Pinv_max, inputs.n_I*(P_RE[t]+Pdch[t]))
                 Pdg[t]=min(Edef_AC,Pn_DG)
-                Pdg[t]=Pdg[t]*(Pdg[t]>=inputs.LR_DG*Pn_DG)+inputs.LR_DG*Pn_DG*(Pdg[t]<inputs.LR_DG*Pn_DG)*(Pdg[t]>Pdg_min)  # TODO: what is this multiplication?
+                Pdg[t]=Pdg[t]*(Pdg[t]>=inputs.LR_DG*Pn_DG)+inputs.LR_DG*Pn_DG*(Pdg[t]<inputs.LR_DG*Pn_DG)*(Pdg[t]>Pdg_min)
                 
                 Pbuy[t]=max(0, min(Edef_AC-Pdg[t],inputs.Pbuy_max))
                 Psell[t]=max(0, min(Pdg[t]-Edef_AC,inputs.Psell_max))
@@ -123,14 +123,14 @@ def energy_management(
                 
                 Edef_DC=min(Pinv_max, Eload[t]/inputs.n_I)-P_RE[t]
                 Eb_e=(Eb[t]-Ebmin)*inputs.ef_bat
-                Pdch[t]=min(Eb_e,Edef_DC)*(Edef_DC>0)    # TODO: what is this multiplication?
+                Pdch[t]=min(Eb_e,Edef_DC)*(Edef_DC>0)
                 Pdch[t]=min(Pdch[t],Pdch_max) 
                 
                 Edef_AC=Eload[t]-min(Pinv_max, inputs.n_I*(P_RE[t]+Pdch[t]))
                 Pbuy[t]= min(Edef_AC, inputs.Pbuy_max)
                 
                 Pdg[t]=min(Edef_AC-Pbuy[t],Pn_DG)
-                Pdg[t]=Pdg[t]*(Pdg[t]>=inputs.LR_DG*Pn_DG)+inputs.LR_DG*Pn_DG*(Pdg[t]<inputs.LR_DG*Pn_DG)*(Pdg[t]>Pdg_min)  # TODO: what is this multiplication?
+                Pdg[t]=Pdg[t]*(Pdg[t]>=inputs.LR_DG*Pn_DG)+inputs.LR_DG*Pn_DG*(Pdg[t]<inputs.LR_DG*Pn_DG)*(Pdg[t]>Pdg_min)
             
             Edef_DC=(Eload[t]+Psell[t]-Pdg[t]-Pbuy[t])/inputs.n_I-(P_RE[t]+Pdch[t]-Pch[t])
 
@@ -141,8 +141,8 @@ def energy_management(
             
 
             Esur=Eload[t]+Psell[t]-Pbuy[t]-Pdg[t]-min(Pinv_max, (P_RE[t]+Pdch[t]-Pch[t])*inputs.n_I) 
-            Ens[t]=Esur*(Esur>0) # TODO: what is this multiplication?
-            Edump[t]=-Esur*(Esur<0) # TODO: what is this multiplication?
+            Ens[t]=Esur*(Esur>0) 
+            Edump[t]=-Esur*(Esur<0)
 
         # Battery charging and discharging energy is determined based on charging and discharging power and the battery charge level is updated.
         Ech[t]=Pch[t]*dt
