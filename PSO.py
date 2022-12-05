@@ -30,9 +30,9 @@ def main(data='Data.csv', **kwargs):
     
     print(position)
     
-    LCOE = fitness(position, Eload, G, T, Vw, inputs) 
+    # LCOE = fitness(position, Eload, G, T, Vw, inputs) 
 
-    print(LCOE)
+    # print(LCOE)
 
 
 """
@@ -47,7 +47,7 @@ def pso(
 ):
 
     nVar = 5                # number of decision variables
-    VarSize = [0, nVar]     # size of decision variables matrix
+    VarSize = (1, nVar)   # size of decision variables matrix
 
     # Variable: PV number, WT number, Battery number, number of DG, Rated Power Inverter
     VarMin = np.array([0,0,0,0,0]) # Lower bound of variables
@@ -84,7 +84,6 @@ def pso(
         empty_particle = Particle()
         particle = [empty_particle for _ in range(nPop)]
         particle = np.array(particle)
-        # np.tile(empty_particle, (nPop, 0))
 
         GlobalBest = {
             "Cost": float('inf'),
@@ -96,7 +95,7 @@ def pso(
             position_array = []
             for var in range(len(VarMin)):
                 position_array.append(np.random.uniform(VarMin[var], VarMax[var]))
-            particle[i].Position = position_array
+            particle[i].Position = np.array(position_array)
             
             # initialize velocity
             particle[i].Velocity = np.zeros(VarSize)
@@ -109,7 +108,7 @@ def pso(
             particle[i].BestCost = particle[i].Cost
 
             # Update global best
-            if particle[i].BestCost < GlobalBestCost:
+            if particle[i].BestCost < GlobalBest["Cost"]:
                 GlobalBest["Cost"] = particle[i].BestCost
                 GlobalBest["Position"] = particle[i].BestPosition
     
@@ -121,25 +120,26 @@ def pso(
             for i in range(nPop):
 
                 # update velocity
-                particle[i].Velocity = w * particle[i].Velocity + c1 * random.uniform(0,1,(VarSize,VarSize)) * (particle[i].BestPosition - particle[i].Position) + c2 * random.uniform(0,1,(VarSize,VarSize)) * (GlobalBest["Position"]-particle[i].Position)
+                particle[i].Velocity = w * particle[i].Velocity + c1 * np.random.uniform(0,1,(VarSize)) * (particle[i].BestPosition - particle[i].Position) + c2 * np.random.uniform(0,1,(VarSize)) * (GlobalBest["Position"]-particle[i].Position)
 
                 # apply velocity limits
-                particle[i].Velocity = max(particle[i].Velocity, VelMin)
-                particle[i].Velocity = min(particle[i].Velocity, VelMax)
+                particle[i].Velocity = np.maximum(particle[i].Velocity, VelMin)
+                particle[i].Velocity = np.minimum(particle[i].Velocity, VelMax)
 
                 # update position
                 particle[i].Position = particle[i].Position + particle[i].Velocity
 
                 # Velocity Mirror Effect
-                if particle[i].Position < VarMin or particle[i].Position > VarMax:
+                # TODO: double check this condition is correct
+                if np.any(np.less(particle[i].Position, VarMin) | np.greater(particle[i].Position, VarMax)):
                     particle[i].Velocity = -particle[i].Velocity 
 
                 # Apply position limits
-                particle[i].Position = max(particle[i].Position, VarMin)
-                particle[i].Position = min(particle[i].Position, VarMax)
+                particle[i].Position = np.maximum(particle[i].Position, VarMin)
+                particle[i].Position = np.minimum(particle[i].Position, VarMax)
 
                 # evaluation
-                particle[i].Cost = fitness(particle[i].Position, Eload, G, T, Vw, inputs)
+                particle[i].Cost = fitness(particle[i].Position[0], Eload, G, T, Vw, inputs)
 
                 # update personal best
                 if particle[i].Cost < particle[i].BestCost:

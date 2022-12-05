@@ -8,10 +8,10 @@ class Solution():
 
 class Particle():
     def __init__(self):
-        self.Position = np.array([])
-        self.Cost = np.array([])
-        self.Velocity = np.array([])
+        self.Position = 0
+        self.Cost = 0
+        self.Velocity = 0
 
         # to represent personal best
-        self.BestPosition = np.array([])
-        self.BestCost = np.array([])
+        self.BestPosition = 0
+        self.BestCost = 0

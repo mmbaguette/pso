@@ -8,10 +8,10 @@ Fitness function
 def fitness(X, Eload, G, T, Vw, inputs):
     NT = Eload.size # time step numbers
 
-    Npv = round(X[0]) # PV number
-    Nwt = round(X[1]) # WT number
-    Nbat = round(X[2]) # Battery pack number
-    N_DG = round(X[3]) # number of diesel generator
+    Npv = np.round(X[0]) # PV number
+    Nwt = np.round(X[1]) # WT number
+    Nbat = np.round(X[2]) # Battery pack number
+    N_DG = np.round(X[3]) # number of diesel generator
     Cn_I = X[4] # inverter capacity
 
     Pn_PV=Npv*inputs.Ppv_r     # PV Total Capacity
@@ -70,6 +70,7 @@ def fitness(X, Eload, G, T, Vw, inputs):
     RC_I = np.zeros((1,inputs.n+1))
     RC_CH = np.zeros((1,inputs.n+1))
 
+    # TODO:replacement cost
     RC_PV[inputs.L_PV+1:inputs.L_PV:inputs.n+1]= inputs.R_PV*Pn_PV / (1+inputs.ir) ** np.array([[1.001*inputs.L_PV], [inputs.L_PV], [inputs.n]])
     RC_WT[inputs.L_WT+1:inputs.L_WT:inputs.n+1]= inputs.R_WT*Pn_WT / (1+inputs.ir) ** np.array([[1.001*inputs.L_WT], [inputs.L_WT], [inputs.n]])
     RC_DG[L_DG+1:L_DG:inputs.n+1]= inputs.R_DG*Pn_DG / (1+inputs.ir) ** np.array([[1.001*L_DG], [L_DG], [inputs.n]])
@@ -80,7 +81,7 @@ def fitness(X, Eload, G, T, Vw, inputs):
     R_Cost=RC_PV+RC_WT+RC_DG+RC_B+RC_I+RC_CH
 
     # Total M&O Cost ($/year)
-    MO_Cost=(inputs.MO_PV*Pn_PV + inputs.MO_WT*Pn_WT + inputs.MO_DG*sum(Pn_DG[Pn_DG>0])+ inputs.MO_B*Cn_B+ inputs.MO_I*Cn_I +inputs.MO_CH) / (1+inputs.ir) ** np.array([[1], [inputs.n]])
+    MO_Cost=(inputs.MO_PV*Pn_PV + inputs.MO_WT*Pn_WT + inputs.MO_DG*np.count_nonzero(Pn_DG)+ inputs.MO_B*Cn_B+ inputs.MO_I*Cn_I +inputs.MO_CH) / (1+inputs.ir) ** np.array([1, inputs.n])
 
     # DG fuel Cost
     C_Fu= sum(inputs.C_fuel*q)/(1+inputs.ir) ** np.array([[1], [inputs.n]])
@@ -90,7 +91,7 @@ def fitness(X, Eload, G, T, Vw, inputs):
     S_PV=(inputs.R_PV*Pn_PV)*L_rem/inputs.L_PV * 1/(1+inputs.ir) ** inputs.n # PV
     L_rem=(inputs.RT_WT+1)*inputs.L_WT-inputs.n
     S_WT=(inputs.R_WT*Pn_WT)*L_rem/inputs.L_WT * 1/(1+inputs.ir) ** inputs.n # WT
-    L_rem=(inputs.RT_DG+1)*L_DG-inputs.n
+    L_rem=(inputs.R_DG+1)*L_DG-inputs.n
     S_DG=(inputs.R_DG*Pn_DG)*L_rem/L_DG * 1/(1+inputs.ir) ** inputs.n # DG
     L_rem=(inputs.RT_B +1)*inputs.L_B-inputs.n
     S_B =(inputs.R_B*Cn_B)*L_rem/inputs.L_B * 1/(1+inputs.ir) ** inputs.n
@@ -124,8 +125,11 @@ def fitness(X, Eload, G, T, Vw, inputs):
     LPSP = sum(Ens) / sum(Eload)
 
     RE=1-sum(Pdg+Pbuy)/sum(Eload+Psell-Ens)
-    RE.fillna(0)
+    np.nan_to_num(RE)
 
-    Z=LCOE+inputs.EM*LEM+10*(LPSP[LPSP>inputs.LPSP_max])+10*(RE[RE<inputs.RE_min])+100*(I_Cost[I_Cost>inputs.Budget])+100*max(0, LPSP-inputs.LPSP_max)+100*max(0, inputs.RE_min-RE)+100*max(0, I_Cost-inputs.Budget)
+    LPSP = np.where(LPSP > inputs.LPSP_max, 1, 0)
+    RE = np.where(RE < inputs.RE_min, 1, 0)
+    I_Cost = np.where(I_Cost > inputs.Budget,1,0)
+    Z=LCOE+inputs.EM*LEM+10*LPSP+10*RE+100*I_Cost+100*max(0, LPSP-inputs.LPSP_max)+100*max(0, inputs.RE_min-RE)+100*max(0, I_Cost-inputs.Budget)
 
     return Z
